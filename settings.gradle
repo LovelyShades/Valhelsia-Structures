@@ -11,4 +11,3 @@ plugins {
 }
 rootProject.name = 'Valhelsia-Structures'
 include 'neoforge'
-include 'datagen'

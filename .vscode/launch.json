@@ -4,6 +4,28 @@
     {
       "type": "java",
       "request": "launch",
+      "name": "datagen - Data",
+      "presentation": {
+        "group": "Mod Development - datagen",
+        "order": 0
+      },
+      "projectName": "datagen",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\MODS REWORK\\Valhelsia-Structures\\datagen\\build\\moddev\\dataRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\MODS REWORK\\Valhelsia-Structures\\datagen\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dvalhelsia_structures%%D:\\MODS REWORK\\Valhelsia-Structures\\datagen\\bin\\main;valhelsia_structures%%D:\\MODS REWORK\\Valhelsia-Structures\\neoforge\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\datagen\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
       "name": "neoforge - Client",
       "presentation": {
         "group": "Mod Development - neoforge",
@@ -63,28 +85,6 @@
         "-Dfml.modFolders\u003dvalhelsia_structures%%D:\\MODS REWORK\\Valhelsia-Structures\\neoforge\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\neoforge\\run",
-      "env": {},
-      "console": "internalConsole",
-      "shortenCommandLine": "none"
-    },
-    {
-      "type": "java",
-      "request": "launch",
-      "name": "datagen - Data",
-      "presentation": {
-        "group": "Mod Development - datagen",
-        "order": 0
-      },
-      "projectName": "datagen",
-      "mainClass": "net.neoforged.devlaunch.Main",
-      "args": [
-        "@D:\\MODS REWORK\\Valhelsia-Structures\\datagen\\build\\moddev\\dataRunProgramArgs.txt"
-      ],
-      "vmArgs": [
-        "@D:\\MODS REWORK\\Valhelsia-Structures\\datagen\\build\\moddev\\dataRunVmArgs.txt",
-        "-Dfml.modFolders\u003dvalhelsia_structures%%D:\\MODS REWORK\\Valhelsia-Structures\\datagen\\bin\\main;valhelsia_structures%%D:\\MODS REWORK\\Valhelsia-Structures\\neoforge\\bin\\main"
-      ],
-      "cwd": "${workspaceFolder}\\datagen\\run",
       "env": {},
       "console": "internalConsole",
       "shortenCommandLine": "none"
