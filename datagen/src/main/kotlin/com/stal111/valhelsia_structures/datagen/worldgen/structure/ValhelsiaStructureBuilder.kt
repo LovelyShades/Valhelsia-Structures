@@ -1,84 +1,243 @@
 package com.stal111.valhelsia_structures.datagen.worldgen.structure
 
-import com.stal111.valhelsia_structures.common.world.structures.StartPoolDecider
-import com.stal111.valhelsia_structures.common.world.structures.ValhelsiaJigsawStructure
-import com.stal111.valhelsia_structures.common.world.structures.ValhelsiaStructureSettings
+import com.stal111.valhelsia_structures.common.builtin.BuiltInStructurePools
+import com.stal111.valhelsia_structures.common.builtin.BuiltInStructures
 import com.stal111.valhelsia_structures.common.world.structures.height.StructureHeightProvider
+import com.stal111.valhelsia_structures.utils.ModTags
 import com.stal111.valhelsia_structures.utils.StartPoolKeySet
+import com.stal111.valhelsia_structures.datagen.worldgen.structure.ValhelsiaStructureBuilderDsl.skipVoid
+import net.minecraft.core.HolderGetter
 import net.minecraft.core.HolderSet
 import net.minecraft.core.registries.Registries
 import net.minecraft.data.worldgen.BootstrapContext
+import net.minecraft.resources.ResourceKey
+import net.minecraft.tags.TagKey
+import net.minecraft.util.random.WeightedRandomList
+import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobCategory
 import net.minecraft.world.level.biome.Biome
+import net.minecraft.world.level.biome.MobSpawnSettings
 import net.minecraft.world.level.levelgen.GenerationStep
-import net.minecraft.world.level.levelgen.Heightmap
 import net.minecraft.world.level.levelgen.structure.Structure
 import net.minecraft.world.level.levelgen.structure.StructureSpawnOverride
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment
-import net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings
+import net.minecraft.world.level.levelgen.structure.templatesystem.AbstractVillagePiece
+import net.minecraft.world.level.levelgen.structure.VillageConfig
+import net.minecraft.world.level.levelgen.VerticalAnchor
+import net.neoforged.neoforge.registries.holdersets.AndHolderSet
+import net.valhelsia.dataforge.RegistryDataProvider
 
-@DslMarker
-annotation class ValhelsiaJigsawStructureDsl
+/**
+ * Registers Valhelsia structures, snapping them to actual terrain and skipping pure void.
+ */
+object ModStructures : RegistryDataProvider<Structure> {
+    override fun bootstrap(context: BootstrapContext<Structure>) = context.run {
+        val biomeHolderGetter = lookup(Registries.BIOME)
 
-@ValhelsiaJigsawStructureDsl
-class ValhelsiaStructureBuilder(
-    private val context: BootstrapContext<Structure>,
-    private val biomeHolderSet: HolderSet<Biome>,
-    private val step: GenerationStep.Decoration,
-    private val terrainAdjustment: TerrainAdjustment,
-    private val startPool: StartPoolKeySet
-) {
-    private val spawnOverrides = mutableMapOf<MobCategory, StructureSpawnOverride>()
-    private var maxDepth: Int = 7
-    private var projectStartToHeightmap: Heightmap.Types? = Heightmap.Types.WORLD_SURFACE_WG
-    private var heightProvider: StructureHeightProvider? = null
-    private var maxDistanceFromCenter: Int = 80
-    private val structureSettings = ValhelsiaStructureSettings.builder()
+        val castleBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_CASTLE)
+        val castleRuinBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_CASTLE_RUIN)
+        val desertHouseBiomes = withConditionTag(
+            biomeHolderGetter,
+            ModTags.Biomes.HAS_DESERT_HOUSE,
+            ModTags.Biomes.DESERT_HOUSE_CONDITION
+        )
+        val forgeBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_FORGE)
+        val playerHouseBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_PLAYER_HOUSE)
+        val spawnerDungeonBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_SPAWNER_DUNGEON)
+        val towerRuinBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_TOWER_RUIN)
+        val witchHutBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_WITCH_HUT)
+        val bigTreeBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_BIG_TREE)
+        val spawnerRoomBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_SPAWNER_ROOM)
+        val deepSpawnerRoomBiomes = singleTag(biomeHolderGetter, ModTags.Biomes.HAS_DEEP_SPAWNER_ROOM)
 
-    fun addSpawnOverride(category: MobCategory, override: StructureSpawnOverride) = apply {
-        spawnOverrides[category] = override
+        // Surface structures with skipVoid to avoid void-floor
+        surfaceStructure(
+            BuiltInStructures.CASTLE,
+            castleBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.CASTLES
+        ) {
+            skipVoid()
+            chance(0.4)
+        }
+        surfaceStructure(
+            BuiltInStructures.CASTLE_RUIN,
+            castleRuinBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.CASTLE_RUINS
+        ) {
+            skipVoid()
+            chance(0.5)
+        }
+        surfaceStructure(
+            BuiltInStructures.DESERT_HOUSE,
+            desertHouseBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.DESERT_HOUSES
+        ) {
+            skipVoid()
+            chance(0.7)
+        }
+        surfaceStructure(
+            BuiltInStructures.FORGE,
+            forgeBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.FORGES
+        ) {
+            skipVoid()
+            chance(0.65)
+        }
+        surfaceStructure(
+            BuiltInStructures.PLAYER_HOUSE,
+            playerHouseBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.PLAYER_HOUSES
+        ) {
+            skipVoid()
+            chance(0.65)
+        }
+        surfaceStructure(
+            BuiltInStructures.SPAWNER_DUNGEON,
+            spawnerDungeonBiomes,
+            TerrainAdjustment.NONE,
+            BuiltInStructurePools.SPAWNER_DUNGEONS
+        ) {
+            skipVoid()
+            chance(0.7)
+            startHeight(StructureHeightProvider.surfaceBetween(
+                VerticalAnchor.absolute(0), VerticalAnchor.absolute(75)
+            ))
+            individualTerrainAdjustment()
+            ignoreWaterLogging()
+        }
+        surfaceStructure(
+            BuiltInStructures.TOWER_RUIN,
+            towerRuinBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.TOWER_RUINS
+        ) {
+            skipVoid()
+            chance(0.7)
+        }
+        surfaceStructure(
+            BuiltInStructures.WITCH_HUT,
+            witchHutBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.WITCH_HUTS
+        ) {
+            skipVoid()
+            chance(0.85)
+            margin(3)
+            addSpawnOverride(
+                MobCategory.MONSTER,
+                StructureSpawnOverride(
+                    StructureSpawnOverride.BoundingBoxType.PIECE,
+                    WeightedRandomList.create(
+                        MobSpawnSettings.SpawnerData(EntityType.WITCH, 1, 1, 1)
+                    )
+                )
+            )
+            addSpawnOverride(
+                MobCategory.CREATURE,
+                StructureSpawnOverride(
+                    StructureSpawnOverride.BoundingBoxType.PIECE,
+                    WeightedRandomList.create(
+                        MobSpawnSettings.SpawnerData(EntityType.CAT, 1, 1, 1)
+                    )
+                )
+            )
+        }
+        surfaceStructure(
+            BuiltInStructures.BIG_TREE,
+            bigTreeBiomes,
+            TerrainAdjustment.BEARD_THIN,
+            BuiltInStructurePools.BIG_TREES
+        ) {
+            skipVoid()
+            chance(0.6)
+        }
+
+        // Underground structures remain unchanged
+        undergroundStructure(
+            BuiltInStructures.SPAWNER_ROOM,
+            spawnerRoomBiomes,
+            TerrainAdjustment.NONE,
+            BuiltInStructurePools.SPAWNER_ROOMS
+        ) {
+            chance(0.9)
+            startHeight(StructureHeightProvider.spawnerRoom(VerticalAnchor.absolute(0)))
+            ignoreWaterLogging()
+        }
+        undergroundStructure(
+            BuiltInStructures.DEEP_SPAWNER_ROOM,
+            deepSpawnerRoomBiomes,
+            TerrainAdjustment.NONE,
+            BuiltInStructurePools.DEEP_SPAWNER_ROOMS
+        ) {
+            startHeight(
+                StructureHeightProvider.deepSpawnerRoom(
+                    VerticalAnchor.aboveBottom(6),
+                    VerticalAnchor.absolute(-1)
+                )
+            )
+            ignoreWaterLogging()
+        }
     }
 
-    fun maxDepth(maxDepth: Int) = apply {
-        this.maxDepth = maxDepth
-    }
-
-    fun startHeight(heightProvider: StructureHeightProvider) = apply {
-        this.projectStartToHeightmap = null
-        this.heightProvider = heightProvider
-    }
-
-    fun heightmap(projectStartToHeightmap: Heightmap.Types) = apply {
-        this.projectStartToHeightmap = projectStartToHeightmap
-        this.heightProvider = null
-    }
-
-    fun individualTerrainAdjustment() = apply {
-        structureSettings.enableIndividualTerrainAdjustment(true)
-    }
-
-    fun chance(spawnChance: Double) = apply {
-        structureSettings.setSpawnChance(spawnChance)
-    }
-
-    fun margin(customMargin: Int) = apply {
-        structureSettings.setCustomMargin(customMargin)
-    }
-
-    fun ignoreWaterLogging() = apply {
-        structureSettings.setLiquidSettings(LiquidSettings.IGNORE_WATERLOGGING)
-    }
-
-    fun build(): ValhelsiaJigsawStructure {
-        val settings = Structure.StructureSettings(biomeHolderSet, spawnOverrides, step, terrainAdjustment)
-        return ValhelsiaJigsawStructure(
-            settings,
-            structureSettings.build(),
-            StartPoolDecider.of(context.lookup(Registries.TEMPLATE_POOL), startPool),
-            maxDepth,
-            heightProvider,
-            projectStartToHeightmap,
-            maxDistanceFromCenter
+    private fun BootstrapContext<Structure>.structure(
+        key: ResourceKey<Structure>,
+        biomeHolderSet: HolderSet<Biome>,
+        step: GenerationStep.Decoration,
+        terrainAdjustment: TerrainAdjustment,
+        startPool: StartPoolKeySet,
+        init: com.stal111.valhelsia_structures.datagen.worldgen.structure.ValhelsiaStructureBuilderDsl.() -> Unit
+    ) {
+        this.register(
+            key,
+            com.stal111.valhelsia_structures.datagen.worldgen.structure.ValhelsiaStructureBuilder(
+                this,
+                biomeHolderSet,
+                step,
+                terrainAdjustment,
+                startPool
+            ).apply(init).build()
         )
     }
+
+    private fun BootstrapContext<Structure>.surfaceStructure(
+        key: ResourceKey<Structure>,
+        biomeHolderSet: HolderSet<Biome>,
+        terrainAdjustment: TerrainAdjustment,
+        startPool: StartPoolKeySet,
+        init: com.stal111.valhelsia_structures.datagen.worldgen.structure.ValhelsiaStructureBuilderDsl.() -> Unit
+    ) = structure(key, biomeHolderSet, GenerationStep.Decoration.FLUID_SPRINGS, terrainAdjustment, startPool, init)
+
+    private fun BootstrapContext<Structure>.undergroundStructure(
+        key: ResourceKey<Structure>,
+        biomeHolderSet: HolderSet<Biome>,
+        terrainAdjustment: TerrainAdjustment,
+        startPool: StartPoolKeySet,
+        init: com.stal111.valhelsia_structures.datagen.worldgen.structure.ValhelsiaStructureBuilderDsl.() -> Unit
+    ) = structure(
+        key,
+        biomeHolderSet,
+        GenerationStep.Decoration.UNDERGROUND_STRUCTURES,
+        terrainAdjustment,
+        startPool,
+        init
+    )
+
+    private fun singleTag(biomeHolderGetter: HolderGetter<Biome>, tagKey: TagKey<Biome>) =
+        biomeHolderGetter.getOrThrow(tagKey)
+
+    private fun withConditionTag(
+        biomeHolderGetter: HolderGetter<Biome>,
+        tagKey: TagKey<Biome>,
+        conditionTagKey: TagKey<Biome>
+    ) = AndHolderSet(
+        listOf(
+            biomeHolderGetter.getOrThrow(tagKey),
+            biomeHolderGetter.getOrThrow(conditionTagKey)
+        )
+    )
 }
